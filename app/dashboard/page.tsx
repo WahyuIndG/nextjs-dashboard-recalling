@@ -2,17 +2,33 @@ import { Card } from '@/app/ui/dashboard/cards';
 import RevenueChart from '@/app/ui/dashboard/revenue-chart';
 import LatestInvoices from '@/app/ui/dashboard/latest-invoices';
 import { lusitana } from '@/app/ui/fonts';
-import { fetchCardData, fetchLatestInvoices, fetchRevenue } from '../lib/data';
+import {
+	fetchAllDashboardData,
+	fetchCardData,
+	fetchLatestInvoices,
+	fetchRevenue,
+} from '../lib/data';
 
 export default async function Page() {
-	const revenue = await fetchRevenue();
-	const latestInvoices = await fetchLatestInvoices();
+	// const revenue = await fetchRevenue();
+	// const latestInvoices = await fetchLatestInvaoices();
+	// const {
+	// 	numberOfCustomers,
+	// 	numberOfInvoices,
+	// 	totalPaidInvoices,
+	// 	totalPendingInvoices,
+	// } = await fetchCardData();
+
 	const {
-		numberOfCustomers,
-		numberOfInvoices,
-		totalPaidInvoices,
-		totalPendingInvoices,
-	} = await fetchCardData();
+		revenue,
+		latestInvoices,
+		cardData: {
+			numberOfCustomers,
+			numberOfInvoices,
+			totalPaidInvoices,
+			totalPendingInvoices,
+		},
+	} = await fetchAllDashboardData();
 
 	return (
 		<main>

@@ -8,18 +8,20 @@ import {
 	Revenue,
 } from './definitions';
 import { formatCurrency } from './utils';
+import { revenue } from './placeholder-data';
+import LatestInvoices from '../ui/dashboard/latest-invoices';
 
 export async function fetchRevenue() {
 	try {
 		// Artificially delay a response for demo purposes.
 		// Don't do this in production :)
 
-		// console.log('Fetching revenue data...');
-		// await new Promise((resolve) => setTimeout(resolve, 3000));
+		console.log('Fetching revenue data...');
+		await new Promise((resolve) => setTimeout(resolve, 6000));
 
 		const data = await sql<Revenue>`SELECT * FROM revenue`;
 
-		// console.log('Data fetch completed after 3 seconds.');
+		console.log('Revenue data fetch completed after 6 seconds.');
 
 		return data.rows;
 	} catch (error) {
@@ -41,6 +43,12 @@ export async function fetchLatestInvoices() {
 			...invoice,
 			amount: formatCurrency(invoice.amount),
 		}));
+
+		// Artificially delay a response for demo purposes.
+		console.log('Fetching Latest Invoices data...');
+		await new Promise((resolve) => setTimeout(resolve, 2000));
+		console.log('Latest Invoices data fetch completed after 2 seconds.');
+
 		return latestInvoices;
 	} catch (error) {
 		console.error('Database Error:', error);
@@ -65,6 +73,11 @@ export async function fetchCardData() {
 			customerCountPromise,
 			invoiceStatusPromise,
 		]);
+
+		// Artificially delay a response for demo purposes.
+		console.log('Fetching card data...');
+		await new Promise((resolve) => setTimeout(resolve, 4000));
+		console.log('Card data fetch completed after 4 seconds.');
 
 		const numberOfInvoices = Number(data[0].rows[0].count ?? '0');
 		const numberOfCustomers = Number(data[1].rows[0].count ?? '0');
@@ -210,5 +223,78 @@ export async function fetchFilteredCustomers(query: string) {
 	} catch (err) {
 		console.error('Database Error:', err);
 		throw new Error('Failed to fetch customer table.');
+	}
+}
+
+async function fetchPromiseRevenue() {
+	console.log('Fetching revenue data...');
+
+	await new Promise((resolve) => setTimeout(resolve, 6000));
+
+	const data = sql<Revenue>`SELECT * FROM revenue`;
+
+	console.log('Revenie data fetch completed after 6 seconds.');
+	return data;
+}
+
+async function fetchPromiseInvoices() {
+	console.log('Fetching latest invoices data...');
+	await new Promise((resolve) => setTimeout(resolve, 2000));
+
+	const data = sql<LatestInvoiceRaw>`
+	SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
+	FROM invoices
+	JOIN customers ON invoices.customer_id = customers.id
+	ORDER BY invoices.date DESC
+	LIMIT 5`;
+
+	console.log('Latest Invoice data fetch completed after 2 seconds.');
+
+	return data;
+}
+
+async function fetchPromiseCard() {
+	console.log('Fetching card data...');
+	await new Promise((resolve) => setTimeout(resolve, 4000));
+
+	const data = sql`SELECT
+											(SELECT COUNT(*) FROM invoices) AS "invoice_count",
+											(SELECT COUNT(*) FROM customers) AS "customer_count",
+											(SELECT SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) FROM invoices) AS "paid",
+											(SELECT SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) FROM invoices) AS "pending"`;
+
+	console.log('Card data fetch completed after 4 seconds.');
+
+	return data;
+}
+
+export async function fetchAllDashboardData() {
+	try {
+		const allData = await Promise.all([
+			fetchPromiseRevenue(),
+			fetchPromiseInvoices(),
+			fetchPromiseCard(),
+		]);
+
+		const revenue = allData[0].rows;
+		const latestInvoices = allData[1].rows.map((inv) => ({
+			...inv,
+			amount: formatCurrency(inv.amount),
+		}));
+		const cardData = {
+			numberOfInvoices: allData[2].rows[0].invoice_count,
+			numberOfCustomers: allData[2].rows[0].customer_count,
+			totalPaidInvoices: formatCurrency(allData[2].rows[0].paid),
+			totalPendingInvoices: formatCurrency(allData[2].rows[0].pending),
+		};
+
+		return {
+			revenue,
+			latestInvoices,
+			cardData,
+		};
+	} catch (error) {
+		console.error('Database Error:', error);
+		throw new Error('Failed to fetch all dashboard data.');
 	}
 }
