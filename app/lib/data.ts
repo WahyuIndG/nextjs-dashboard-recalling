@@ -8,20 +8,17 @@ import {
 	Revenue,
 } from './definitions';
 import { formatCurrency } from './utils';
-import { revenue } from './placeholder-data';
-import LatestInvoices from '../ui/dashboard/latest-invoices';
 
 export async function fetchRevenue() {
 	try {
 		// Artificially delay a response for demo purposes.
 		// Don't do this in production :)
 
-		console.log('Fetching revenue data...');
+		console.log('Fetching Revenue data...');
 		await new Promise((resolve) => setTimeout(resolve, 6000));
+		console.log('Revenue completed after 6 seconds.');
 
 		const data = await sql<Revenue>`SELECT * FROM revenue`;
-
-		console.log('Revenue data fetch completed after 6 seconds.');
 
 		return data.rows;
 	} catch (error) {
@@ -47,7 +44,7 @@ export async function fetchLatestInvoices() {
 		// Artificially delay a response for demo purposes.
 		console.log('Fetching Latest Invoices data...');
 		await new Promise((resolve) => setTimeout(resolve, 2000));
-		console.log('Latest Invoices data fetch completed after 2 seconds.');
+		console.log('Latest Invoices completed after 2 seconds.');
 
 		return latestInvoices;
 	} catch (error) {
@@ -75,9 +72,9 @@ export async function fetchCardData() {
 		]);
 
 		// Artificially delay a response for demo purposes.
-		console.log('Fetching card data...');
+		console.log('Fetching Card data...');
 		await new Promise((resolve) => setTimeout(resolve, 4000));
-		console.log('Card data fetch completed after 4 seconds.');
+		console.log('Card completed after 4 seconds.');
 
 		const numberOfInvoices = Number(data[0].rows[0].count ?? '0');
 		const numberOfCustomers = Number(data[1].rows[0].count ?? '0');
@@ -233,7 +230,7 @@ async function fetchPromiseRevenue() {
 
 	const data = sql<Revenue>`SELECT * FROM revenue`;
 
-	console.log('Revenie data fetch completed after 6 seconds.');
+	console.log('Revenie completed after 6 seconds.');
 	return data;
 }
 
@@ -248,7 +245,7 @@ async function fetchPromiseInvoices() {
 	ORDER BY invoices.date DESC
 	LIMIT 5`;
 
-	console.log('Latest Invoice data fetch completed after 2 seconds.');
+	console.log('Latest Invoice completed after 2 seconds.');
 
 	return data;
 }
@@ -263,7 +260,7 @@ async function fetchPromiseCard() {
 											(SELECT SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) FROM invoices) AS "paid",
 											(SELECT SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) FROM invoices) AS "pending"`;
 
-	console.log('Card data fetch completed after 4 seconds.');
+	console.log('Card completed after 4 seconds.');
 
 	return data;
 }
