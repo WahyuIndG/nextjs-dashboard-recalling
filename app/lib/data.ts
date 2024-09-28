@@ -8,8 +8,28 @@ import {
 	Revenue,
 } from './definitions';
 import { formatCurrency } from './utils';
+import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 
-export async function fetchRevenue() {
+// export async function fetchRevenue() {
+// 	try {
+// 		// Artificially delay a response for demo purposes.
+// 		// Don't do this in production :)
+
+// 		console.log('Fetching Revenue data...');
+// 		await new Promise((resolve) => setTimeout(resolve, 6000));
+// 		console.log('Revenue completed after 6 seconds.');
+
+// 		const data = await sql<Revenue>`SELECT * FROM revenue`;
+
+// 		return data.rows;
+// 	} catch (error) {
+// 		console.error('Database Error:', error);
+// 		throw new Error('Failed to fetch revenue data.');
+// 	}
+// }
+
+export const fetchRevenue = cache(async () => {
 	try {
 		// Artificially delay a response for demo purposes.
 		// Don't do this in production :)
@@ -25,7 +45,7 @@ export async function fetchRevenue() {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch revenue data.');
 	}
-}
+});
 
 export async function fetchLatestInvoices() {
 	try {
@@ -139,6 +159,11 @@ export async function fetchInvoicesPages(query: string) {
       invoices.status ILIKE ${`%${query}%`}
   `;
 
+		// artifically delay
+		console.log('fetching total pages');
+		await createDelay(3000);
+		console.log('fetch total pages complete after 3 seconds');
+
 		const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
 		return totalPages;
 	} catch (error) {
@@ -146,6 +171,36 @@ export async function fetchInvoicesPages(query: string) {
 		throw new Error('Failed to fetch total number of invoices.');
 	}
 }
+
+export const fetchInvoicesPagesWithCache = unstable_cache(
+	async (query: string) => {
+		try {
+			const count = await sql`SELECT COUNT(*)
+    FROM invoices
+    JOIN customers ON invoices.customer_id = customers.id
+    WHERE
+      customers.name ILIKE ${`%${query}%`} OR
+      customers.email ILIKE ${`%${query}%`} OR
+      invoices.amount::text ILIKE ${`%${query}%`} OR
+      invoices.date::text ILIKE ${`%${query}%`} OR
+      invoices.status ILIKE ${`%${query}%`}
+  `;
+
+			// artifically delay
+			console.log('fetching total pages');
+			await createDelay(3000);
+			console.log('fetch total pages complete after 3 seconds');
+
+			const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
+			return totalPages;
+		} catch (error) {
+			console.error('Database Error:', error);
+			throw new Error('Failed to fetch total number of invoices.');
+		}
+	},
+	['invoice-pages'],
+	{ tags: ['i-p'] }
+);
 
 export async function fetchInvoiceById(id: string) {
 	try {
@@ -223,6 +278,8 @@ export async function fetchFilteredCustomers(query: string) {
 	}
 }
 
+// code di bawah ini percobaan pribadi (try difference waterfall vs parallel)
+
 async function fetchPromiseRevenue() {
 	console.log('Fetching revenue data...');
 
@@ -294,4 +351,8 @@ export async function fetchAllDashboardData() {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch all dashboard data.');
 	}
+}
+
+async function createDelay(ms: number) {
+	await new Promise((resolve) => setTimeout(resolve, ms));
 }
